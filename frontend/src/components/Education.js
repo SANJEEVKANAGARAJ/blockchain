@@ -1,21 +1,24 @@
 import React, { useState } from "react";
 import { getContract } from "../utils/contract";
 import { ethers } from "ethers";
+import RupeeConverter from "./RupeeConverter";
 
 const PURPOSES = ["Tuition Fee", "Online Course", "Textbooks", "Exam Fee", "Scholarship", "Workshop"];
 
 export default function Education() {
-  const [purpose, setPurpose] = useState("");
+  const [purpose, setPurpose]           = useState("");
   const [customPurpose, setCustomPurpose] = useState("");
-  const [amount, setAmount]   = useState("");
-  const [status, setStatus]   = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [recipient, setRecipient]         = useState("");
+  const [amount, setAmount]               = useState("");
+  const [status, setStatus]               = useState(null);
+  const [loading, setLoading]             = useState(false);
 
   const pay = async () => {
     try {
       setLoading(true);
       const label = purpose === "custom" ? customPurpose : purpose;
       if (!label) { setStatus("❌ Please select a purpose"); return; }
+      if (!recipient) { setStatus("❌ Please enter the recipient address"); setLoading(false); return; }
       setStatus(`⏳ Sending education payment for "${label}"...`);
       const contract = await getContract();
       const tx = await contract.payWithPurpose(label, {
@@ -35,6 +38,16 @@ export default function Education() {
       <div className="module-icon">🎓</div>
       <h2>Education Payments</h2>
       <p className="module-desc">Pay tuition and education fees with purpose tags on-chain</p>
+
+      <div className="form-group">
+        <label>Recipient Address</label>
+        <input
+          className="input-field"
+          placeholder="0x..."
+          value={recipient}
+          onChange={e => setRecipient(e.target.value)}
+        />
+      </div>
 
       <div className="purpose-grid">
         {PURPOSES.map(p => (
@@ -57,6 +70,7 @@ export default function Education() {
         </div>
       )}
 
+      <RupeeConverter onEthAmount={setAmount} />
       <div className="form-group">
         <label>Amount (ETH)</label>
         <input

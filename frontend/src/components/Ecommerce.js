@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getContract } from "../utils/contract";
 import { api } from "../utils/api";
 import { ethers } from "ethers";
+import RupeeConverter from "./RupeeConverter";
 
 const DEMO_PRODUCTS = [
   { id: 1, name: "Wireless Headphones", price: "0.02", description: "Premium noise-cancelling", emoji: "🎧" },
@@ -16,6 +17,7 @@ export default function Ecommerce() {
   const [loading, setLoading]   = useState(null);
   const [sellerAddr, setSellerAddr] = useState("");
   const [purchases, setPurchases] = useState([]);
+  const [customEth, setCustomEth] = useState(null);
 
   useEffect(() => {
     loadProducts();
@@ -75,6 +77,13 @@ export default function Ecommerce() {
         <label>Seller Wallet Address (for escrow)</label>
         <input className="input-field" placeholder="0x seller address..." value={sellerAddr} onChange={e => setSellerAddr(e.target.value)} />
       </div>
+
+      <RupeeConverter onEthAmount={setCustomEth} />
+      {customEth && (
+        <div className="rupee-hint" style={{marginBottom:'1rem',marginTop:'-0.5rem'}}>
+          Your entered amount ≈ <strong>{customEth} ETH</strong>. Products are priced in ETH — use this as a reference.
+        </div>
+      )}
 
       <div className="product-grid">
         {products.map(p => (

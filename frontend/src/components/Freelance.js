@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getContract } from "../utils/contract";
 import { API_BASE_URL, api } from "../utils/api";
 import { ethers } from "ethers";
+import RupeeConverter from "./RupeeConverter";
 
 export default function Freelance() {
   const [title, setTitle]               = useState("");
@@ -143,6 +144,7 @@ export default function Freelance() {
           <div className="form-group"><label>Freelancer Address</label>
             <input className="input-field" placeholder="0x..." value={freelancer} onChange={e => setFreelancer(e.target.value)} />
           </div>
+          <RupeeConverter onEthAmount={setMilestoneAmt} />
           <div className="form-group"><label>Amount (ETH)</label>
             <input className="input-field" type="number" placeholder="0.01" value={milestoneAmt} onChange={e => setMilestoneAmt(e.target.value)} />
           </div>

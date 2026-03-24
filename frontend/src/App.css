@@ -267,3 +267,94 @@ body {
   .header-inner { padding: 0; }
   .main-content { padding: 0 1rem 3rem; }
 }
+
+/* ===== Rupee Converter Bar ===== */
+.rupee-converter {
+  background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08));
+  border: 1px solid rgba(124,58,237,0.35);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem 0.9rem;
+  margin-bottom: 1.6rem;
+  position: relative;
+  overflow: hidden;
+}
+.rupee-converter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.rupee-converter-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 0.75rem; flex-wrap: wrap;
+}
+.rupee-icon {
+  font-size: 1.15rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.rupee-title {
+  font-size: 0.85rem; font-weight: 600; color: var(--text);
+  letter-spacing: 0.2px;
+}
+.rupee-rate {
+  font-size: 0.78rem; color: var(--accent2);
+  background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+  padding: 3px 10px; border-radius: 50px; margin-left: auto;
+}
+.rupee-fetching {
+  font-size: 0.75rem; color: var(--text-muted);
+  margin-left: auto; animation: pulse 1.5s infinite;
+}
+.rupee-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.rupee-input-wrap {
+  position: relative; flex: 1; min-width: 160px;
+}
+.rupee-prefix {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 1rem; font-weight: 600; color: var(--accent);
+  pointer-events: none; z-index: 1;
+}
+.rupee-input {
+  padding-left: 30px !important;
+  margin-bottom: 0 !important;
+}
+.rupee-arrow {
+  font-size: 1.3rem; color: var(--text-muted); flex-shrink: 0;
+}
+.rupee-result {
+  display: flex; align-items: baseline; gap: 5px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 10px; padding: 10px 14px; flex-shrink: 0;
+}
+.rupee-eth-val {
+  font-size: 1.05rem; font-weight: 700; color: var(--success);
+}
+.rupee-eth-unit {
+  font-size: 0.8rem; color: var(--text-muted); font-weight: 500;
+}
+.btn-use-eth {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; border: none; padding: 10px 16px;
+  border-radius: 10px; font-weight: 600; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.25s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-use-eth:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+.rupee-hint {
+  margin-top: 0.65rem; font-size: 0.78rem; color: var(--text-muted);
+  line-height: 1.5;
+}
+.rupee-hint strong { color: var(--success); }
+.rupee-hint em { color: var(--accent2); font-style: normal; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .rupee-row { flex-direction: column; align-items: stretch; }
+  .rupee-arrow { text-align: center; }
+  .rupee-result { justify-content: center; }
+  .btn-use-eth { width: 100%; text-align: center; }
+}
+

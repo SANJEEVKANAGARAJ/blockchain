@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { getContract } from "../utils/contract";
 import { api } from "../utils/api";
 import { ethers } from "ethers";
+import RupeeConverter from "./RupeeConverter";
 
 export default function SendMoney() {
   const [addr, setAddr]     = useState("");
@@ -71,6 +72,7 @@ export default function SendMoney() {
           onChange={e => setAddr(e.target.value)}
         />
       </div>
+      <RupeeConverter onEthAmount={setAmt} />
       <div className="form-group">
         <label>Amount (ETH)</label>
         <input

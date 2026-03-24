@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { getContract } from "../utils/contract";
 import { ethers } from "ethers";
+import RupeeConverter from "./RupeeConverter";
 
 export default function Trade() {
   const [sellerAddr, setSellerAddr] = useState("");
@@ -72,6 +73,7 @@ export default function Trade() {
             <label>Seller Address</label>
             <input className="input-field" placeholder="0x..." value={sellerAddr} onChange={e => setSellerAddr(e.target.value)} />
           </div>
+          <RupeeConverter onEthAmount={setAmount} />
           <div className="form-group">
             <label>Amount (ETH)</label>
             <input className="input-field" type="number" placeholder="0.05" value={amount} onChange={e => setAmount(e.target.value)} />
