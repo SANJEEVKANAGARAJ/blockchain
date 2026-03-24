@@ -9,17 +9,30 @@ export default function Trade() {
   const [status, setStatus]         = useState(null);
   const [loading, setLoading]       = useState(false);
   const [activeTab, setActiveTab]   = useState("create");
+  const [createdOrders, setCreatedOrders] = useState([]);
 
   const createOrder = async () => {
     try {
       setLoading(true);
       setStatus("⏳ Creating escrow order...");
       const contract = await getContract();
+      const nextOrderId = Number(await contract.orderCount());
       const tx = await contract.createOrder(sellerAddr, {
         value: ethers.parseEther(amount)
       });
       const receipt = await tx.wait();
-      setStatus(`✅ Order created! TX: ${receipt.hash.slice(0, 12)}...`);
+      setCreatedOrders(prev => [
+        {
+          id: nextOrderId,
+          sellerAddr,
+          amount,
+          txHash: receipt.hash,
+        },
+        ...prev,
+      ]);
+      setOrderId(String(nextOrderId));
+      setActiveTab("confirm");
+      setStatus(`✅ Order #${nextOrderId} created! Use this order ID to confirm delivery.`);
     } catch (err) {
       setStatus(`❌ ${err.message}`);
     } finally {
@@ -66,6 +79,23 @@ export default function Trade() {
           <button className="btn-primary" onClick={createOrder} disabled={loading}>
             {loading ? "Processing..." : "🔒 Lock in Escrow"}
           </button>
+
+          {createdOrders.length > 0 && (
+            <div className="tx-history">
+              <h4>Created Orders</h4>
+              {createdOrders.map(order => (
+                <div key={order.txHash} className="tx-item">
+                  <span>Order #{order.id} • {order.amount} ETH</span>
+                  <button className="btn-secondary" onClick={() => {
+                    setOrderId(String(order.id));
+                    setActiveTab("confirm");
+                  }}>
+                    Use ID
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
@@ -78,6 +108,20 @@ export default function Trade() {
           <button className="btn-primary" onClick={confirmDelivery} disabled={loading}>
             {loading ? "Processing..." : "✅ Confirm & Release Funds"}
           </button>
+
+          {createdOrders.length > 0 && (
+            <div className="tx-history">
+              <h4>Available Order IDs</h4>
+              {createdOrders.map(order => (
+                <div key={`confirm-${order.txHash}`} className="tx-item">
+                  <span>Order #{order.id} • {order.amount} ETH</span>
+                  <button className="btn-secondary" onClick={() => setOrderId(String(order.id))}>
+                    Select
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 

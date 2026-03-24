@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getContract } from "../utils/contract";
+import { API_BASE_URL, api } from "../utils/api";
 import { ethers } from "ethers";
-import axios from "axios";
-
-const API = "http://localhost:5000/api";
 
 export default function Freelance() {
   const [title, setTitle]               = useState("");
@@ -15,12 +13,21 @@ export default function Freelance() {
   const [status, setStatus]             = useState(null);
   const [loading, setLoading]           = useState(false);
   const [activeTab, setActiveTab]       = useState("create");
+  const [projects, setProjects]         = useState([]);
+  const [milestones, setMilestones]     = useState([]);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const createProject = async () => {
     try {
       setLoading(true);
       setStatus("⏳ Creating project in backend...");
-      const res = await axios.post(`${API}/freelance`, { title, freelancerAddress: freelancer });
+      const res = await api.post("/freelance", { title, freelancerAddress: freelancer });
+      setProjects(prev => [...prev, res.data]);
+      setProjectId(String(res.data.id));
+      setProjectIdRel(String(res.data.id));
       setStatus(`✅ Project created! ID: ${res.data.id} — "${res.data.title}"`);
     } catch (err) {
       setStatus(`❌ ${err.message}`);
@@ -38,6 +45,17 @@ export default function Freelance() {
         value: ethers.parseEther(milestoneAmt)
       });
       await tx.wait();
+      setMilestones(prev => [
+        {
+          id: prev.filter(m => m.projectId === String(projectId)).length,
+          projectId: String(projectId),
+          amount: milestoneAmt,
+          freelancer,
+        },
+        ...prev,
+      ]);
+      setProjectIdRel(String(projectId));
+      setMilestoneId(String(milestones.filter(m => m.projectId === String(projectId)).length));
       setStatus(`✅ Milestone added for project ${projectId} — ${milestoneAmt} ETH locked`);
     } catch (err) {
       setStatus(`❌ ${err.message}`);
@@ -58,6 +76,15 @@ export default function Freelance() {
       setStatus(`❌ ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      const res = await api.get("/freelance");
+      setProjects(res.data);
+    } catch (err) {
+      console.error(`Unable to load freelance projects from ${API_BASE_URL}:`, err);
     }
   };
 
@@ -86,6 +113,25 @@ export default function Freelance() {
           <button className="btn-primary" onClick={createProject} disabled={loading}>
             {loading ? "Creating..." : "Create Project"}
           </button>
+
+          {projects.length > 0 && (
+            <div className="tx-history">
+              <h4>Existing Projects</h4>
+              {projects.map(project => (
+                <div key={project.id} className="tx-item">
+                  <span>Project #{project.id} • {project.title}</span>
+                  <button className="btn-secondary" onClick={() => {
+                    setProjectId(String(project.id));
+                    setProjectIdRel(String(project.id));
+                    setFreelancer(project.freelancerAddress || "");
+                    setActiveTab("milestone");
+                  }}>
+                    Use Project
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
@@ -103,6 +149,23 @@ export default function Freelance() {
           <button className="btn-primary" onClick={addMilestone} disabled={loading}>
             {loading ? "Adding..." : "🔒 Lock Milestone"}
           </button>
+
+          {projects.length > 0 && (
+            <div className="tx-history">
+              <h4>Select a Project</h4>
+              {projects.map(project => (
+                <div key={`milestone-${project.id}`} className="tx-item">
+                  <span>Project #{project.id} • {project.title}</span>
+                  <button className="btn-secondary" onClick={() => {
+                    setProjectId(String(project.id));
+                    setFreelancer(project.freelancerAddress || "");
+                  }}>
+                    Select
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
@@ -117,6 +180,23 @@ export default function Freelance() {
           <button className="btn-primary" onClick={releaseMilestone} disabled={loading}>
             {loading ? "Releasing..." : "💰 Release Payment"}
           </button>
+
+          {milestones.length > 0 && (
+            <div className="tx-history">
+              <h4>Created Milestones</h4>
+              {milestones.map(milestone => (
+                <div key={`${milestone.projectId}-${milestone.id}`} className="tx-item">
+                  <span>Project #{milestone.projectId} • Milestone #{milestone.id}</span>
+                  <button className="btn-secondary" onClick={() => {
+                    setProjectIdRel(String(milestone.projectId));
+                    setMilestoneId(String(milestone.id));
+                  }}>
+                    Select
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 

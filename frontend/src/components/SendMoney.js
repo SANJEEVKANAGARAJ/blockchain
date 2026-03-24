@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { getContract } from "../utils/contract";
+import { api } from "../utils/api";
 import { ethers } from "ethers";
-import axios from "axios";
-
-const API = "http://localhost:5000/api";
 
 export default function SendMoney() {
   const [addr, setAddr]     = useState("");
@@ -13,6 +11,8 @@ export default function SendMoney() {
   const [txHistory, setTxHistory] = useState([]);
 
   const send = async () => {
+    let confirmed = false;
+
     try {
       setLoading(true);
       setStatus("⏳ Sending transaction...");
@@ -21,28 +21,40 @@ export default function SendMoney() {
         value: ethers.parseEther(amt)
       });
       await tx.wait();
+      confirmed = true;
+      setStatus(`✅ Sent ${amt} ETH to ${addr.slice(0, 8)}...`);
+    } catch (err) {
+      setStatus(`❌ Error: ${err.message}`);
+      setLoading(false);
+      return;
+    }
 
-      // Record in backend
-      await axios.post(`${API}/payments/send`, {
+    try {
+      await api.post("/payments/send", {
         sender: "Your Wallet",
         receiver: addr,
         amount: amt + " ETH"
       });
-
-      setStatus(`✅ Sent ${amt} ETH to ${addr.slice(0, 8)}...`);
-      loadHistory();
     } catch (err) {
-      setStatus(`❌ Error: ${err.message}`);
+      if (confirmed) {
+        console.error("Payment recorded on-chain, but backend sync failed:", err);
+      }
+    }
+
+    try {
+      await loadHistory();
+    } catch (err) {
+      if (confirmed) {
+        console.error("Payment succeeded, but transaction history refresh failed:", err);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const loadHistory = async () => {
-    try {
-      const res = await axios.get(`${API}/payments`);
-      setTxHistory(res.data);
-    } catch {}
+    const res = await api.get("/payments");
+    setTxHistory(res.data);
   };
 
   return (

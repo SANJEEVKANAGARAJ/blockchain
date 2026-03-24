@@ -1,9 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getContract } from "../utils/contract";
+import { api } from "../utils/api";
 import { ethers } from "ethers";
-import axios from "axios";
-
-const API = "http://localhost:5000/api";
 
 const DEMO_PRODUCTS = [
   { id: 1, name: "Wireless Headphones", price: "0.02", description: "Premium noise-cancelling", emoji: "🎧" },
@@ -16,20 +14,33 @@ export default function Ecommerce() {
   const [products, setProducts] = useState(DEMO_PRODUCTS);
   const [status, setStatus]     = useState(null);
   const [loading, setLoading]   = useState(null);
-  const [newName, setNewName]   = useState("");
-  const [newPrice, setNewPrice] = useState("");
   const [sellerAddr, setSellerAddr] = useState("");
+  const [purchases, setPurchases] = useState([]);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   const buyProduct = async (product) => {
     try {
       setLoading(product.id);
       setStatus(`⏳ Processing payment for ${product.name}...`);
       const contract = await getContract();
+      const nextOrderId = Number(await contract.orderCount());
       const tx = await contract.createOrder(sellerAddr || "0x000000000000000000000000000000000000dEaD", {
         value: ethers.parseEther(product.price)
       });
       await tx.wait();
-      setStatus(`✅ Purchased ${product.name} for ${product.price} ETH! Funds in escrow.`);
+      setPurchases(prev => [
+        {
+          id: `${product.id}-${Date.now()}`,
+          name: product.name,
+          price: product.price,
+          orderId: nextOrderId,
+        },
+        ...prev,
+      ]);
+      setStatus(`✅ Purchased ${product.name} for ${product.price} ETH! Order #${nextOrderId} is now in escrow.`);
     } catch (err) {
       setStatus(`❌ ${err.message}`);
     } finally {
@@ -37,14 +48,20 @@ export default function Ecommerce() {
     }
   };
 
-  const addProduct = async () => {
+  const loadProducts = async () => {
     try {
-      const res = await axios.post(`${API}/products`, { name: newName, price: newPrice });
-      setProducts(prev => [...prev, { ...res.data, emoji: "📦" }]);
-      setNewName(""); setNewPrice("");
-      setStatus(`✅ "${newName}" added to catalog`);
+      const res = await api.get("/products");
+      if (res.data.length > 0) {
+        setProducts(prev => {
+          const existingIds = new Set(prev.map(product => product.id));
+          const backendProducts = res.data
+            .filter(product => !existingIds.has(product.id))
+            .map(product => ({ ...product, emoji: "📦" }));
+          return [...prev, ...backendProducts];
+        });
+      }
     } catch (err) {
-      setStatus(`❌ ${err.message}`);
+      console.error("Unable to load backend products:", err);
     }
   };
 
@@ -73,14 +90,16 @@ export default function Ecommerce() {
         ))}
       </div>
 
-      <div className="add-product">
-        <h4>Add Product to Backend Catalog</h4>
-        <div className="form-row">
-          <input className="input-field" placeholder="Product name" value={newName} onChange={e => setNewName(e.target.value)} />
-          <input className="input-field" placeholder="Price (ETH)" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
-          <button className="btn-secondary" onClick={addProduct}>Add</button>
+      {purchases.length > 0 && (
+        <div className="tx-history">
+          <h4>Bought Products</h4>
+          {purchases.map(product => (
+            <div key={product.id} className="tx-item">
+              <span>{product.name} • {product.price} ETH • Order #{product.orderId}</span>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
 
       {status && <div className="status-msg">{status}</div>}
     </div>
